@@ -8,6 +8,8 @@ use helix_github_theme::{combine_tables, download_colorschemes};
 use toml::Value;
 
 fn main() {
+    let mut header = fs::read_to_string("header.toml").unwrap();
+    header.push('\n');
     let mut light_template = fs::read_to_string("light_template.toml").unwrap();
     light_template.push('\n');
     let mut dark_template = fs::read_to_string("dark_template.toml").unwrap();
@@ -28,11 +30,22 @@ fn main() {
         path.push(format!("github_{}.toml", variant_name));
         let mut file = File::create(&path).unwrap();
 
-        // write template
-        if variant_name.contains("light") {
+        // add header
+        file.write_all(header.as_bytes()).unwrap();
+
+        // write template for light and dark
+        if variant_name == "light" {
             file.write_all(light_template.as_bytes()).unwrap();
-        } else {
+        } else if variant_name == "dark" {
             file.write_all(dark_template.as_bytes()).unwrap();
+        } else if variant_name.starts_with("light") {
+            // inherit from light
+            file.write_all("inherits = \"github_light\"\n\n".as_bytes())
+                .unwrap();
+        } else {
+            file.write_all("inherits = \"github_dark\"\n\n".as_bytes())
+                .unwrap();
+            // inherit from dark
         }
 
         // write palette
